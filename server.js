@@ -9,57 +9,6 @@ const port = 3000;
 // 获取本机真实局域网 IPv4 地址（严格排除虚拟网卡）
 // server.js 修改部分
 
-// 获取本机局域网 IPv4 地址
-function getLocalIpAddress() {
-    // 【新增】优先检查环境变量 HOST_IP (用于 Docker 场景)
-    const envIp = process.env.HOST_IP;
-    if (envIp) {
-        console.log(`[Docker Mode] Using host IP from environment: ${envIp}`);
-        return envIp;
-    }
-
-    const interfaces = os.networkInterfaces();
-    const candidates = [];
-
-    for (const name of Object.keys(interfaces)) {
-        const lowerName = name.toLowerCase();
-
-        // 过滤虚拟网卡 (保留原有逻辑)
-        if (lowerName.includes('veth') ||
-            lowerName.includes('wsl') ||
-            lowerName.includes('hyper-v') ||
-            lowerName.includes('vmware') ||
-            lowerName.includes('virtualbox') ||
-            lowerName.includes('docker')) {
-            continue;
-        }
-
-        for (const iface of interfaces[name]) {
-            if (iface.family === 'IPv4' && !iface.internal) {
-                const ip = iface.address;
-                candidates.push({ name, ip });
-
-                // 优先级：常见局域网段
-                if (ip.startsWith('192.168.') ||
-                    ip.startsWith('10.') ||
-                    (ip.startsWith('172.') && parseInt(ip.split('.')[1]) >= 16 && parseInt(ip.split('.')[1]) <= 31)) {
-                    return ip;
-                }
-            }
-        }
-    }
-
-    if (candidates.length > 0) {
-        return candidates[0].ip;
-    }
-
-    return '127.0.0.1';
-}
-
-// ... 其他代码保持不变 ...
-// server.js 修改部分
-
-// 获取本机局域网 IPv4 地址
 function getLocalIpAddress() {
     // 【新增】优先检查环境变量 HOST_IP (用于 Docker 场景)
     const envIp = process.env.HOST_IP;

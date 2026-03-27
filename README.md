@@ -37,7 +37,9 @@ node server.js
 docker build -t small-yuebao-image .
 
 # 2. 运行容器 (映射端口 3000)
-docker run -d -p 3000:3000 --name small-yuebao small-yuebao-image
+先获取电脑的局域网 IP
+ipconfig
+docker run -d -p 3000:3000 -e HOST_IP={YOUR_COMPUTER_IP} small-yuebao-image
 ```
 
 
