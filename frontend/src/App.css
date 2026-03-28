@@ -1,0 +1,44 @@
+.App {
+  text-align: center;
+}
+
+/* 应用导航栏 */
+.app-nav {
+  display: flex;
+  background: white;
+  border-bottom: 1px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  border-bottom: 3px solid transparent;
+}
+
+.nav-btn.active {
+  color: #1677ff;
+  border-bottom-color: #1677ff;
+}
+
+.nav-btn:not(.active):hover {
+  background: #f5f7fa;
+}
+
+/* 支付宝页面特定样式 */
+.alipay-page {
+  background: linear-gradient(180deg, #1677ff 0%, #4096ff 100%);
+}
+
+/* 余额宝页面特定样式 */
+.yuebao-page {
+  background: linear-gradient(180deg, #fff8f0 0%, #ffe8d6 100%);
+}
