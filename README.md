@@ -24,7 +24,7 @@ npm start
 
 访问地址：http://localhost:3000
 
-### Docker部署
+### Docker部署（docker部署尚未解决手机扫码访问问题，建议本地部署）
 
 如果要用Docker部署，需要手动获取本机IP地址，并加在环境变量当中：
 
