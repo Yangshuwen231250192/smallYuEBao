@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { message, Modal } from 'antd';
 import { QRCodeSVG } from 'qrcode.react';
-import { getAccounts, transferIn, transferOut } from '../services/api';
+import { getAccounts, transferIn, transferOut, getApiBaseUrl } from '../services/api';
 import './YuebaoPage.css';
 
 function YuebaoPage({ onSwitchToAlipay }) {
@@ -25,7 +25,7 @@ function YuebaoPage({ onSwitchToAlipay }) {
 
       // 如果没有环境变量，尝试获取后端返回的IP
       try {
-        const response = await fetch('http://localhost:8080/api/ip');
+        const response = await fetch(`${getApiBaseUrl()}/ip`);
         const data = await response.json();
         setLocalIP(data.ip);
       } catch (error) {

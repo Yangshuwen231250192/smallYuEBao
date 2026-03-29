@@ -1,9 +1,13 @@
 package com.example.yuebao.controller;
 
-import com.example.yuebao.model.AccountVO;
+import com.example.yuebao.entity.Account;
+import com.example.yuebao.entity.Transaction;
+import com.example.yuebao.entity.User;
 import com.example.yuebao.service.YuEBaoService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -11,6 +15,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -18,130 +23,200 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*") // 允许 React 前端跨域访问
+@RequiredArgsConstructor
 public class YuEBaoController {
 
-    @Autowired
-    private YuEBaoService yuEBaoService;
+    private final YuEBaoService yuEBaoService;
 
     /**
-     * 获取账户信息
+     * 获取当前用户账户信息
      */
     @GetMapping("/accounts")
-    public ResponseEntity<AccountVO> getAccounts() {
-        AccountVO accounts = yuEBaoService.getAccounts();
-        return ResponseEntity.ok(accounts);
+    public ResponseEntity<?> getAccounts(Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            Account account = yuEBaoService.getUserAccount(username);
+            
+            AccountResponse response = new AccountResponse();
+            response.setBalance(account.getAlipayBalance());
+            response.setYuebao(account.getYuebaoBalance());
+            response.setTotalIncome(account.getTotalIncome());
+            
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
     }
 
     /**
      * 转入操作
      */
-    @PostMapping("/transferIn")
-    public ResponseEntity<?> transferIn(@RequestBody Map<String, String> body) {
+    @PostMapping("/transfer/in")
+    public ResponseEntity<?> transferIn(@RequestBody Map<String, String> body, Authentication authentication) {
         try {
+            String username = authentication.getName();
             BigDecimal amount = new BigDecimal(body.get("amount"));
-            yuEBaoService.transferIn(amount);
-            return ResponseEntity.ok(yuEBaoService.getAccounts());
+            
+            Account account = yuEBaoService.transferIn(username, amount);
+            
+            AccountResponse response = new AccountResponse();
+            response.setBalance(account.getAlipayBalance());
+            response.setYuebao(account.getYuebaoBalance());
+            response.setTotalIncome(account.getTotalIncome());
+            response.setMessage("转入成功");
+            
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
         } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "操作失败：" + e.getMessage());
-            return ResponseEntity.badRequest().body(error);
+            return ResponseEntity.badRequest().body(new ErrorResponse("操作失败"));
         }
     }
 
     /**
      * 转出操作
      */
-    @PostMapping("/transferOut")
-    public ResponseEntity<?> transferOut(@RequestBody Map<String, String> body) {
+    @PostMapping("/transfer/out")
+    public ResponseEntity<?> transferOut(@RequestBody Map<String, String> body, Authentication authentication) {
         try {
+            String username = authentication.getName();
             BigDecimal amount = new BigDecimal(body.get("amount"));
-            yuEBaoService.transferOut(amount);
-            return ResponseEntity.ok(yuEBaoService.getAccounts());
-        } catch (IllegalArgumentException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "操作失败：" + e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
-    }
-
-    /**
-     * 获取本地IP地址
-     */
-    @GetMapping("/ip")
-    public ResponseEntity<Map<String, String>> getLocalIP() {
-        try {
-            String ip = getLocalHostLANAddress().getHostAddress();
             
-            Map<String, String> response = new HashMap<>();
-            response.put("ip", ip);
+            Account account = yuEBaoService.transferOut(username, amount);
+            
+            AccountResponse response = new AccountResponse();
+            response.setBalance(account.getAlipayBalance());
+            response.setYuebao(account.getYuebaoBalance());
+            response.setTotalIncome(account.getTotalIncome());
+            response.setMessage("转出成功");
             
             return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
         } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("ip", "localhost");
-            return ResponseEntity.ok(error);
+            return ResponseEntity.badRequest().body(new ErrorResponse("操作失败"));
         }
     }
 
     /**
-     * 获取正确的本地局域网IP地址（避免获取WSL虚拟网络地址）
+     * 获取交易记录
      */
-    private InetAddress getLocalHostLANAddress() throws Exception {
-        Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+    @GetMapping("/transactions")
+    public ResponseEntity<?> getTransactions(Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            List<Transaction> transactions = yuEBaoService.getUserTransactions(username);
+            
+            return ResponseEntity.ok(transactions);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    /**
+     * 获取服务器IP地址（用于手机访问）
+     */
+    @GetMapping("/ip")
+    public ResponseEntity<Map<String, String>> getServerIp() {
+        try {
+            String ip = getLocalIP();
+            Map<String, String> response = new HashMap<>();
+            response.put("ip", ip);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("ip", "localhost");
+            return ResponseEntity.ok(response);
+        }
+    }
+
+    /**
+     * 获取本地 IP 地址（优先获取真实的物理网卡局域网 IP）
+     */
+    private String getLocalIP() throws Exception {
+        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
         
-        while (networkInterfaces.hasMoreElements()) {
-            NetworkInterface networkInterface = networkInterfaces.nextElement();
+        System.out.println("=== 开始扫描网络接口 ===");
+        
+        // 收集所有非虚拟网卡的IP地址
+        java.util.List<String> candidateIPs = new java.util.ArrayList<>();
+        
+        while (interfaces.hasMoreElements()) {
+            NetworkInterface iface = interfaces.nextElement();
+            if (iface.isLoopback() || !iface.isUp()) continue;
             
-            // 跳过回环接口和未启用的接口
-            if (networkInterface.isLoopback() || !networkInterface.isUp()) {
+            String displayName = iface.getDisplayName().toLowerCase();
+            String name = iface.getName().toLowerCase();
+            
+            // 跳过虚拟网卡（WSL、Hyper-V、VMware、VirtualBox等）
+            if (displayName.contains("hyper-v") || displayName.contains("wsl") ||
+                displayName.contains("vmware") || displayName.contains("virtualbox") ||
+                displayName.contains("virtual") || name.contains("vbox") ||
+                name.contains("vmnet") || name.contains("veth") ||
+                name.contains("docker") || name.contains("br-")) {
+                System.out.println("跳过虚拟网卡: " + displayName);
                 continue;
             }
             
-            // 跳过虚拟网络接口（如WSL、Docker等）
-            String displayName = networkInterface.getDisplayName().toLowerCase();
-            if (displayName.contains("wsl") || displayName.contains("docker") || 
-                displayName.contains("hyper-v") || displayName.contains("virtual") ||
-                displayName.contains("vmware") || displayName.contains("vbox")) {
-                continue;
-            }
+            // 优先处理无线网络
+            boolean isWireless = displayName.contains("wireless") || displayName.contains("wlan") ||
+                                displayName.contains("wi-fi") || displayName.contains("802.11");
             
-            // 检查无线网络接口
-            if (displayName.contains("wireless") || displayName.contains("wlan") || 
-                displayName.contains("wi-fi") || displayName.contains("无线")) {
-                Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
-                while (addresses.hasMoreElements()) {
-                    InetAddress address = addresses.nextElement();
-                    // 返回IPv4地址
-                    if (!address.isLoopbackAddress() && address.getHostAddress().contains(".")) {
-                        return address;
-                    }
+            Enumeration<InetAddress> addresses = iface.getInetAddresses();
+            while (addresses.hasMoreElements()) {
+                InetAddress addr = addresses.nextElement();
+                if (addr.isLoopbackAddress() || addr.getHostAddress().contains(":")) continue;
+                
+                String ip = addr.getHostAddress();
+                System.out.println("找到 IP: " + ip + " (接口: " + displayName + ")");
+                
+                // 优先返回无线网络IP
+                if (isWireless) {
+                    System.out.println("优先选择无线网络IP: " + ip);
+                    return ip;
                 }
-            }
-            
-            // 检查有线网络接口
-            if (displayName.contains("ethernet") || displayName.contains("本地连接") || 
-                displayName.contains("以太网") || displayName.contains("lan")) {
-                Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
-                while (addresses.hasMoreElements()) {
-                    InetAddress address = addresses.nextElement();
-                    // 返回IPv4地址
-                    if (!address.isLoopbackAddress() && address.getHostAddress().contains(".")) {
-                        return address;
-                    }
-                }
+                
+                candidateIPs.add(ip);
             }
         }
         
-        // 如果没有找到合适的接口，返回默认的本地地址
-        return InetAddress.getLocalHost();
+        // 如果有候选IP，返回第一个
+        if (!candidateIPs.isEmpty()) {
+            String selectedIP = candidateIPs.get(0);
+            System.out.println("从候选列表中选择IP: " + selectedIP);
+            return selectedIP;
+        }
+        
+        // 如果实在找不到，尝试获取主机IP
+        try {
+            String hostIP = InetAddress.getLocalHost().getHostAddress();
+            if (!hostIP.equals("127.0.0.1") && !hostIP.equals("127.0.1.1")) {
+                System.out.println("使用主机IP: " + hostIP);
+                return hostIP;
+            }
+        } catch (Exception e) {
+            System.out.println("获取主机IP失败: " + e.getMessage());
+        }
+        
+        System.out.println("未找到合适的 IP，返回 localhost");
+        return "localhost";
+    }
+
+    // DTO类
+    @Data
+    public static class AccountResponse {
+        private BigDecimal balance;
+        private BigDecimal yuebao;
+        private BigDecimal totalIncome;
+        private String message;
+    }
+
+    @Data
+    public static class ErrorResponse {
+        private String error;
+        
+        public ErrorResponse(String error) {
+            this.error = error;
+        }
     }
 }

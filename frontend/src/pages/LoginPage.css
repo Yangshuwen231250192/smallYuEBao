@@ -1,0 +1,104 @@
+/* 响应式设计 */
+.login-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.qr-section {
+  text-align: center;
+  padding: 16px 0;
+  border-top: 1px solid #f0f0f0;
+  margin-top: 16px;
+}
+
+.qr-tip-small {
+  font-size: 12px;
+  color: #666;
+  margin: 8px 0 0 0;
+  line-height: 1.4;
+}
+
+.demo-info {
+  background: #f5f5f5;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border-left: 4px solid #1677ff;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.demo-info p {
+  margin: 4px 0;
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    width: 90vw;
+    margin: 20px;
+  }
+
+  .login-container {
+    padding: 10px;
+  }
+
+  .qr-section {
+    padding: 12px 0;
+  }
+}
+
+/* 二维码弹窗样式 */
+.qr-modal-content {
+  text-align: center;
+  padding: 10px 0;
+}
+
+.qr-code-container {
+  margin-bottom: 20px;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  display: inline-block;
+}
+
+.qr-instructions p {
+  margin: 10px 0;
+  color: #666;
+  line-height: 1.5;
+}
+
+.qr-url {
+  font-family: monospace;
+  background: #f5f5f5;
+  padding: 10px 16px;
+  border-radius: 8px;
+  color: #1677ff;
+  font-weight: 600;
+  font-size: 14px;
+  display: inline-block;
+  margin: 12px 0;
+}
+
+.qr-tip {
+  font-size: 13px;
+  color: #666;
+  background: #fffbe6;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border-left: 3px solid #faad14;
+  text-align: left;
+  margin-top: 12px;
+}
+
+.qr-warning {
+  font-size: 12px;
+  color: #ff4d4f;
+  background: #fff1f0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border-left: 3px solid #ff4d4f;
+  text-align: left;
+  margin-top: 12px;
+  line-height: 1.6;
+}

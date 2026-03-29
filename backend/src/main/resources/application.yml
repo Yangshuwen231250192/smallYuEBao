@@ -1,0 +1,40 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:yuebao_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+        
+  # H2控制台配置（开发环境可用）
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        trace: false
+        web-allow-others: false
+
+  # 服务器配置
+server:
+  port: 8080
+  address: 0.0.0.0
+
+# JWT 配置
+jwt:
+  secret: yuebao-secret-key-2024-this-is-a-very-long-and-secure-secret-key-for-jwt-hmac-sha256-algorithm
+  expiration: 86400000  # 24小时
+
+# 日志配置
+logging:
+  level:
+    com.example.yuebao: DEBUG
+    org.springframework.security: DEBUG
